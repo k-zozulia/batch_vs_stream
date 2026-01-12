@@ -1,0 +1,41 @@
+# Spark configuration
+spark:
+  app_name: "ECommerce Data Processing"
+  master: "local[*]"
+  log_level: "WARN"
+
+# Batch processing configuration
+batch:
+  input_path: "data/batch/"
+  output_path: "data/warehouse/batch/"
+  quarantine_path: "data/warehouse/batch/quarantine/"
+  cancelled_path: "data/warehouse/batch/cancelled/"
+
+# Data generator configuration
+generator:
+  num_records: 10000
+  start_date: "2026-01-01"
+  end_date: "2026-01-31"
+
+  num_products: 50
+  num_customers: 1000
+
+  # Price range
+  min_price: 5.0
+  max_price: 500.0
+
+  # Data quality issues (percentages)
+  duplicate_rate: 0.02          # 2% duplicates
+  negative_quantity_rate: 0.05  # 5% negative quantity
+  negative_price_rate: 0.05     # 5% negative price
+  late_data_rate: 0.05          # 5% late arrivals
+  missing_id_rate: 0.01         # 1% missing ids
+
+  # Output
+  output_file: "data/batch/orders_20260101.csv"
+
+# Dimension tables
+dimensions:
+  customers_path: "data/dimensions/customers.csv"
+  products_path: "data/dimensions/products.csv"
+
