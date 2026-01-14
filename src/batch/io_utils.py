@@ -8,6 +8,7 @@ from pyspark.sql import SparkSession
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
+
 def load_config():
     """Load configuration from YAML file."""
     config_path = PROJECT_ROOT / "config" / "config.yaml"
@@ -26,6 +27,7 @@ def get_absolute_path(relative_path):
         Absolute path as string
     """
     return str(PROJECT_ROOT / relative_path)
+
 
 def create_spark_session(config):
     """
@@ -65,13 +67,14 @@ def read_batch_data(spark, config, schema):
     Returns:
         DataFrame: Raw orders data
     """
-    input_path = get_absolute_path(config['batch']['input_path'])
+    input_path = get_absolute_path(config["batch"]["input_path"])
 
-    df = (spark.read
-          .format("csv")
-          .option("header", "true")
-          .schema(schema)
-          .load(f"{input_path}/*.csv"))
+    df = (
+        spark.read.format("csv")
+        .option("header", "true")
+        .schema(schema)
+        .load(f"{input_path}/*.csv")
+    )
 
     return df
 
@@ -105,8 +108,8 @@ def write_quarantine(df, config, reason):
         reason: Reason for quarantine (e.g., 'negative_values', 'missing_id')
     """
 
-    quarantine_path = config["batch"]["quarantine_path"]
-    output_path = f"{quarantine_path}{reason}/"
+    quarantine_path = PROJECT_ROOT / config["batch"]["quarantine_path"]
+    output_path = f"{quarantine_path}/{reason}/"
 
     write_parquet(df, output_path, mode="overwrite")
 
@@ -120,8 +123,8 @@ def write_cancelled_orders(df, config):
         config: Configuration dictionary
     """
 
-    cancelled_path = config["batch"]["cancelled_path"]
-    write_parquet(df, cancelled_path, partition_by="order_date", mode="overwrite")
+    cancelled_path = PROJECT_ROOT / config["batch"]["cancelled_path"]
+    write_parquet(df, str(cancelled_path), partition_by="order_date", mode="overwrite")
 
 
 def read_dimension_table(spark, path, schema):
@@ -136,4 +139,6 @@ def read_dimension_table(spark, path, schema):
     Returns:
         DataFrame: Dimension table
     """
-    return spark.read.format("csv").option("header", "true").schema(schema).load(str(path))
+    return (
+        spark.read.format("csv").option("header", "true").schema(schema).load(str(path))
+    )

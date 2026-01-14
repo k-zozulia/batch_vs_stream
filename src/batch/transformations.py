@@ -42,7 +42,7 @@ def filter_invalid_values(df: DataFrame) -> tuple[DataFrame, DataFrame]:
 
     valid = df.filter((col("quantity") > 0) & (col("price") >= 0))
 
-    invalid = df.filter((col("quantity") <= 0) & (col("price") < 0))
+    invalid = df.filter((col("quantity") <= 0) | (col("price") < 0))
 
     return valid, invalid
 

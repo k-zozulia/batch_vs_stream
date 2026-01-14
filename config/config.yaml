@@ -11,6 +11,15 @@ batch:
   quarantine_path: "data/warehouse/batch/quarantine/"
   cancelled_path: "data/warehouse/batch/cancelled/"
 
+# Stream processing configuration
+stream:
+  input_path: "data/stream/input/"
+  output_path: "data/warehouse/stream/"
+  checkpoint_path: "data/warehouse/stream/checkpoint/"
+  max_files_per_trigger: 2
+  watermark_delay: "30 minutes"
+  window_duration: "10 minutes"
+
 # Data generator configuration
 generator:
   num_records: 10000
@@ -39,3 +48,10 @@ dimensions:
   customers_path: "data/dimensions/customers.csv"
   products_path: "data/dimensions/products.csv"
 
+# Event generator (for streaming simulation)
+event_generator:
+  source_file: "data/batch/orders_20260101.csv"
+  output_dir: "data/stream/input/"
+  batch_size: 100
+  sleep_min: 1
+  sleep_max: 3

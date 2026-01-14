@@ -4,6 +4,7 @@ Main batch ETL job for e-commerce orders processing.
 Reads historical orders data, applies cleaning and transformations,
 and produces analytical tables.
 """
+
 import time
 from datetime import datetime
 from pathlib import Path
@@ -17,7 +18,7 @@ from src.batch.io_utils import (
     write_parquet,
     write_quarantine,
     write_cancelled_orders,
-    get_absolute_path
+    get_absolute_path,
 )
 from src.batch.transformations import (
     filter_missing_order_id,
@@ -30,10 +31,11 @@ from src.batch.transformations import (
     aggregate_daily_revenue,
     aggregate_product_revenue,
     aggregate_hourly_revenue,
-    get_top_products
+    get_top_products,
 )
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
+
 
 def log_metrics(stage, df, message=""):
     """Helper function to log DataFrame metrics."""
@@ -64,8 +66,8 @@ def main():
     input_count = log_metrics("READ", raw_df, "Input records")
 
     print("Reading dimension tables...")
-    customers_path = PROJECT_ROOT / config['dimensions']['customers_path']
-    products_path = PROJECT_ROOT / config['dimensions']['products_path']
+    customers_path = PROJECT_ROOT / config["dimensions"]["customers_path"]
+    products_path = PROJECT_ROOT / config["dimensions"]["products_path"]
 
     customers_df = read_dimension_table(spark, customers_path, CUSTOMERS_SCHEMA)
     products_df = read_dimension_table(spark, products_path, PRODUCTS_SCHEMA)
@@ -90,7 +92,7 @@ def main():
     valid_df = normalize_status(valid_df)
     print("Status values normalized")
 
-    before_dedup =valid_df.count()
+    before_dedup = valid_df.count()
     valid_df = remove_duplicates(valid_df)
     after_dedup = valid_df.count()
     duplicates_removed = after_dedup - before_dedup
@@ -130,9 +132,9 @@ def main():
     print(f"  ✓ Hourly revenue aggregated (24 hours)")
 
     print("Writing results to warehouse...")
-    output_path = get_absolute_path(config['batch']['output_path'])
+    output_path = get_absolute_path(config["batch"]["output_path"])
 
-    orders_output = f"{output_path}orders/"
+    orders_output = f"{output_path}/orders/"
     write_parquet(enriched_df, orders_output, partition_by="order_date")
     print(f"  ✓ Orders written to: {orders_output}/")
 
@@ -153,7 +155,9 @@ def main():
     print("=" * 70)
     print(f"Input records:        {input_count}")
     print(f"Valid output records: {enriched_df.count()}")
-    print(f"Cancelled orders:     {cancelled_df.count() if cancelled_df.count() > 0 else 0}")
+    print(
+        f"Cancelled orders:     {cancelled_df.count() if cancelled_df.count() > 0 else 0}"
+    )
     print(f"Quarantined records:  {missing_id_df.count() + invalid_values_df.count()}")
     print(f"Duplicates removed:   {duplicates_removed}")
     print(f"Execution time:       {duration:.2f} seconds")
