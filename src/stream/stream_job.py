@@ -3,6 +3,7 @@ Main streaming job for e-commerce orders processing.
 
 Reads streaming data from files and processes in near-real-time.
 """
+
 import time
 from datetime import datetime
 from pathlib import Path
@@ -14,7 +15,7 @@ from src.stream.stream_transformations import (
     derive_streaming_columns,
     enrich_with_dimensions_streaming,
     aggregate_windowed_revenue,
-    aggregate_product_totals
+    aggregate_product_totals,
 )
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, min as _min, max as _max, count as _count
@@ -22,16 +23,17 @@ from pyspark.sql.functions import col, min as _min, max as _max, count as _count
 
 def create_streaming_spark_session(config):
     """Create SparkSession configured for streaming."""
-    spark_config = config['spark']
+    spark_config = config["spark"]
 
-    spark = (SparkSession.builder
-             .appName(f"{spark_config['app_name']} - Streaming")
-             .master(spark_config['master'])
-             .config("spark.sql.shuffle.partitions", "4")
-             .config("spark.sql.streaming.schemaInference", "false")
-             .getOrCreate())
+    spark = (
+        SparkSession.builder.appName(f"{spark_config['app_name']} - Streaming")
+        .master(spark_config["master"])
+        .config("spark.sql.shuffle.partitions", "4")
+        .config("spark.sql.streaming.schemaInference", "false")
+        .getOrCreate()
+    )
 
-    spark.sparkContext.setLogLevel(spark_config['log_level'])
+    spark.sparkContext.setLogLevel(spark_config["log_level"])
 
     return spark
 
@@ -52,13 +54,15 @@ class StreamingMetricsListener:
         if "order_timestamp" in batch_df.columns:
             stats = batch_df.agg(
                 _min("order_timestamp").alias("min_time"),
-                _max("order_timestamp").alias("max_time")
+                _max("order_timestamp").alias("max_time"),
             ).collect()[0]
 
             min_time = stats["min_time"]
             max_time = stats["max_time"]
 
-            print(f"\n[{self.query_name}] Batch #{batch_id} (Total batches: {self.batch_count})")
+            print(
+                f"\n[{self.query_name}] Batch #{batch_id} (Total batches: {self.batch_count})"
+            )
             print(f"  Rows processed: {row_count}")
             print(f"  Event time range: {min_time} to {max_time}")
         else:
@@ -79,7 +83,7 @@ def main():
     # Load configuration
     print("\n[1/6] Loading configuration...")
     config = load_config()
-    stream_config = config['stream']
+    stream_config = config["stream"]
 
     # Create Spark session
     print("[1/6] Creating Spark session for streaming...")
@@ -89,8 +93,8 @@ def main():
     # Read dimension tables (batch DataFrames for stream-to-batch join)
     print("\n[2/6] Loading dimension tables...")
     project_root = Path(__file__).parent.parent.parent
-    customers_path = project_root / config['dimensions']['customers_path']
-    products_path = project_root / config['dimensions']['products_path']
+    customers_path = project_root / config["dimensions"]["customers_path"]
+    products_path = project_root / config["dimensions"]["products_path"]
 
     customers_df = read_dimension_table(spark, customers_path, CUSTOMERS_SCHEMA)
     products_df = read_dimension_table(spark, products_path, PRODUCTS_SCHEMA)
@@ -99,26 +103,27 @@ def main():
 
     # Read streaming data
     print("\n[3/6] Setting up streaming source...")
-    input_path = get_absolute_path(stream_config['input_path'])
-    max_files = stream_config.get('max_files_per_trigger', 2)
+    input_path = get_absolute_path(stream_config["input_path"])
+    max_files = stream_config.get("max_files_per_trigger", 2)
 
     print(f"  Input path: {input_path}")
     print(f"  Max files per trigger: {max_files}")
     print(f"  Schema: Predefined ORDERS_SCHEMA")
 
-    streaming_df = (spark.readStream
-                    .format("csv")
-                    .option("header", "true")
-                    .schema(ORDERS_SCHEMA)
-                    .option("maxFilesPerTrigger", max_files)
-                    .load(input_path))
+    streaming_df = (
+        spark.readStream.format("csv")
+        .option("header", "true")
+        .schema(ORDERS_SCHEMA)
+        .option("maxFilesPerTrigger", max_files)
+        .load(input_path)
+    )
 
     print("  ✓ Streaming source configured")
 
     # Apply transformations
     print("\n[4/6] Applying transformations...")
 
-    watermark_delay = stream_config.get('watermark_delay', '30 minutes')
+    watermark_delay = stream_config.get("watermark_delay", "30 minutes")
 
     # Clean data (includes watermarking for deduplication)
     cleaned_df = clean_streaming_data(streaming_df, watermark_delay)
@@ -129,16 +134,20 @@ def main():
     print("  ✓ Derived columns added")
 
     # Join with dimension tables (stream-to-batch join)
-    enriched_df = enrich_with_dimensions_streaming(enriched_df, customers_df, products_df)
+    enriched_df = enrich_with_dimensions_streaming(
+        enriched_df, customers_df, products_df
+    )
     print("  ✓ Joined with customer dimension (customer_name, customer_segment, etc.)")
     print("  ✓ Joined with product dimension (product_name, category, brand, etc.)")
 
     # Windowed aggregations
     print("\n[5/6] Setting up aggregations...")
-    window_duration = stream_config.get('window_duration', '10 minutes')
+    window_duration = stream_config.get("window_duration", "10 minutes")
 
     windowed_revenue = aggregate_windowed_revenue(enriched_df, window_duration)
-    print(f"  ✓ Windowed aggregation configured ({window_duration} windows, watermark: {watermark_delay})")
+    print(
+        f"  ✓ Windowed aggregation configured ({window_duration} windows, watermark: {watermark_delay})"
+    )
 
     product_totals = aggregate_product_totals(enriched_df)
     print("  ✓ Product totals aggregation configured")
@@ -146,8 +155,8 @@ def main():
     # Set up output sinks
     print("\n[6/6] Starting streaming queries...")
 
-    output_path = get_absolute_path(stream_config['output_path'])
-    checkpoint_path = get_absolute_path(stream_config['checkpoint_path'])
+    output_path = get_absolute_path(stream_config["output_path"])
+    checkpoint_path = get_absolute_path(stream_config["checkpoint_path"])
 
     # Metrics listener for console output
     console_listener = StreamingMetricsListener("Console-WindowedRevenue")
@@ -158,12 +167,12 @@ def main():
         console_listener.log_batch_metrics(batch_df, batch_id)
         batch_df.show(20, truncate=False)
 
-    console_query = (windowed_revenue
-                     .writeStream
-                     .outputMode("update")
-                     .trigger(processingTime="5 seconds")
-                     .foreachBatch(console_batch_handler)
-                     .start())
+    console_query = (
+        windowed_revenue.writeStream.outputMode("update")
+        .trigger(processingTime="5 seconds")
+        .foreachBatch(console_batch_handler)
+        .start()
+    )
 
     print("  ✓ Console sink started (windowed revenue)")
 
@@ -174,17 +183,17 @@ def main():
     def file_batch_handler(batch_df, batch_id):
         file_listener.log_batch_metrics(batch_df, batch_id)
         if batch_df.count() > 0:
-            batch_df.write.mode("append") \
-                .partitionBy("product_id") \
-                .parquet(f"{output_path}/windowed_revenue/")
+            batch_df.write.mode("append").partitionBy("product_id").parquet(
+                f"{output_path}/windowed_revenue/"
+            )
 
-    file_query = (windowed_revenue
-                  .writeStream
-                  .outputMode("append")
-                  .trigger(processingTime="10 seconds")
-                  .option("checkpointLocation", f"{checkpoint_path}/windowed_revenue/")
-                  .foreachBatch(file_batch_handler)
-                  .start())
+    file_query = (
+        windowed_revenue.writeStream.outputMode("append")
+        .trigger(processingTime="10 seconds")
+        .option("checkpointLocation", f"{checkpoint_path}/windowed_revenue/")
+        .foreachBatch(file_batch_handler)
+        .start()
+    )
 
     print("  ✓ File sink started (windowed revenue)")
 
@@ -199,12 +208,12 @@ def main():
             print("\n  Top 10 Products by Revenue:")
             batch_df.orderBy(col("total_revenue").desc()).show(10, truncate=False)
 
-    totals_query = (product_totals
-                    .writeStream
-                    .outputMode("complete")
-                    .trigger(processingTime="10 seconds")
-                    .foreachBatch(totals_batch_handler)
-                    .start())
+    totals_query = (
+        product_totals.writeStream.outputMode("complete")
+        .trigger(processingTime="10 seconds")
+        .foreachBatch(totals_batch_handler)
+        .start()
+    )
 
     print("  ✓ Memory sink started (product totals)")
 
@@ -213,20 +222,20 @@ def main():
     def write_totals_snapshot(batch_df, batch_id):
         """Write current totals snapshot to CSV."""
         if batch_df.count() > 0:
-            snapshot_path = f"{output_path}/product_totals_snapshots/batch_{batch_id:04d}"
-            batch_df.orderBy(col("total_revenue").desc()) \
-                .coalesce(1) \
-                .write.mode("overwrite") \
-                .option("header", "true") \
-                .csv(snapshot_path)
+            snapshot_path = (
+                f"{output_path}/product_totals_snapshots/batch_{batch_id:04d}"
+            )
+            batch_df.orderBy(col("total_revenue").desc()).coalesce(1).write.mode(
+                "overwrite"
+            ).option("header", "true").csv(snapshot_path)
             print(f"  📊 Snapshot written: batch_{batch_id:04d}.csv")
 
-    totals_csv_query = (product_totals
-                       .writeStream
-                       .outputMode("complete")
-                       .trigger(processingTime="15 seconds")
-                       .foreachBatch(write_totals_snapshot)
-                       .start())
+    totals_csv_query = (
+        product_totals.writeStream.outputMode("complete")
+        .trigger(processingTime="15 seconds")
+        .foreachBatch(write_totals_snapshot)
+        .start()
+    )
 
     print("  ✓ CSV snapshot sink started (product totals)")
 
