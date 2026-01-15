@@ -456,44 +456,35 @@ generator:
 ## 📸 Screenshots
 
 ### Batch Processing Execution
-![Batch Job Start](screenshots/01_batch_start.png)
-*Batch ETL job starting with configuration and data loading*
+<img width="654" height="514" alt="image" src="https://github.com/user-attachments/assets/46c35c97-c6a3-468e-8966-3be4723999f3" />
+<img width="670" height="244" alt="image" src="https://github.com/user-attachments/assets/2eac73d9-5073-46e6-b4a1-be52fff202c3" />
 
-![Batch Job Metrics](screenshots/02_batch_metrics.png)
-*Data quality checks, transformations, and final metrics*
 
-![Batch Job Complete](screenshots/03_batch_complete.png)
-*Batch job completion with execution statistics*
 
 ---
 
 ### Event Generator
-![Event Generator](screenshots/04_event_generator.png)
-*Event generator splitting data into micro-batches for streaming simulation*
+<img width="717" height="365" alt="image" src="https://github.com/user-attachments/assets/e544cdd1-6938-43d7-8b88-5bfde9e99f10" />
 
 ---
 
 ### Streaming Processing Execution
-![Stream Job Start](screenshots/05_stream_start.png)
-*Streaming job initialization with dimension tables and source setup*
+<img width="642" height="152" alt="image" src="https://github.com/user-attachments/assets/d97d02ed-54c6-4fb6-b5af-b922803b7d98" />
+<img width="701" height="514" alt="image" src="https://github.com/user-attachments/assets/2a875cfa-654d-4aad-850a-f0ef3918d854" />
+<img width="748" height="702" alt="image" src="https://github.com/user-attachments/assets/d416710b-b9e6-4fc3-846a-0ea836e1ab44" />
+<img width="690" height="631" alt="image" src="https://github.com/user-attachments/assets/0429cbda-54ac-442b-94ff-ad79b8e63287" />
+<img width="639" height="423" alt="image" src="https://github.com/user-attachments/assets/1c3544bb-60ea-4695-9c96-27d555306711" />
+<img width="597" height="275" alt="image" src="https://github.com/user-attachments/assets/d2ac2f4a-8ab9-4ffe-ba92-d950aa7c1d0c" />
 
-![Stream Processing Batches](screenshots/06_stream_processing.png)
-*Real-time processing of micro-batches with windowed aggregations*
 
-![Stream Product Totals](screenshots/07_stream_totals.png)
-*Running totals per product updated with each micro-batch*
-
-![Stream Job Complete](screenshots/08_stream_complete.png)
-*Streaming job completion statistics*
 
 ---
 
 ### Output Data Structure
-![Output Files](screenshots/09_output_structure.png)
+<img width="332" height="455" alt="image" src="https://github.com/user-attachments/assets/786d52f5-1765-4c46-98cb-f5b5bc510960" />
+
 *Warehouse structure showing batch and stream outputs*
 
-![Parquet Output](screenshots/10_parquet_output.png)
-*Sample of processed data in Parquet format*
 
 ---
 
