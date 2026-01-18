@@ -201,7 +201,6 @@ def main():
     orders = generate_orders(config)
 
     output_file = config["generator"]["output_file"]
-    save_to_csv(orders, output_file)
 
     save_to_csv(orders, output_file)
 

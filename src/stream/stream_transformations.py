@@ -1,15 +1,6 @@
 """
 Data transformations for streaming processing.
-Similar to batch but adapted for streaming constraints.
-
-STREAMING LIMITATIONS vs BATCH:
-1. Cannot easily write quarantine files - invalid data is filtered out
-2. dropDuplicates requires watermark on event-time column for state management
-3. Cannot separate cancelled orders to different file during processing
-4. Aggregations require careful watermark configuration for late data handling
-5. Stateful operations (like deduplication) consume memory - watermark helps cleanup
-6. Complete output mode not supported with file sinks - need to use update/append
-7. Append mode for aggregations requires watermark to determine when to output
+Adapted from batch transformations with streaming-specific constraints.
 """
 
 from pyspark.sql import DataFrame
@@ -32,9 +23,6 @@ def clean_streaming_data(
 ) -> DataFrame:
     """
     Apply basic cleaning for streaming data.
-
-    Note: We cannot separate invalid data into quarantine in streaming mode
-    as easily as in batch, so we filter it out.
 
     Limitations in streaming vs batch:
     - Cannot write quarantine files during processing (would need separate sink)
