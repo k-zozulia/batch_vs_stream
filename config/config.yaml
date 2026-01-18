@@ -55,3 +55,9 @@ event_generator:
   batch_size: 100
   sleep_min: 1
   sleep_max: 3
+
+# Kafka setup
+kafka:
+  bootstrap_servers: "localhost:9092"
+  topic: "ecommerce-orders"
+  consumer_group: "spark-ecommerce-group"

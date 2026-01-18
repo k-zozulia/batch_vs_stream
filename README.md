@@ -43,6 +43,16 @@ Both pipelines apply the same business logic (cleaning, validation, enrichment, 
 - ✅ Checkpoint management for fault tolerance
 - ✅ Late data handling with watermarking
 
+### Kafka Streaming (Bonus)
+- ✅ Production-grade event streaming with Apache Kafka
+- ✅ KRaft mode (no Zookeeper dependency)
+- ✅ Real-time message processing (1-3 second latency)
+- ✅ Message persistence and replay capability
+- ✅ Kafka UI for monitoring and debugging
+- ✅ Same transformations as file-based streaming
+- ✅ Consumer group management
+- ✅ Horizontal scalability
+
 ### Common Components
 - 🔧 Synthetic data generator with configurable data quality issues
 - 🔧 Event generator for streaming simulation (splits data into micro-batches)
@@ -59,12 +69,14 @@ Both pipelines apply the same business logic (cleaning, validation, enrichment, 
 - **PySpark**: 4.0.1
 - **Java JDK**: 17 (Temurin recommended)
 - **Hadoop utilities**: winutils.exe and hadoop.dll (Windows only)
+- **Docker Desktop**: For Kafka integration (optional)
 
 ### Python Dependencies
 ```
 pyspark==4.0.1
 pyyaml==6.0.1
 pandas==2.3.3
+kafka-python==2.0.2
 ```
 
 ### Environment Variables
@@ -88,12 +100,13 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 ```
 batch_vs_stream/
 │
+├── docker-compose.yml           # Kafka + Kafka UI setup (KRaft mode)
 ├── config/
-│   └── config.yaml              # All configuration (paths, Spark settings, data generation params)
+│   └── config.yaml              # All configuration (paths, Spark, Kafka settings)
 │
 ├── data/
 │   ├── batch/                   # Input CSV files for batch processing
@@ -110,6 +123,7 @@ batch_vs_stream/
 │       │   └── cancelled/       # Cancelled orders
 │       └── stream/              # Stream processing outputs
 │           ├── windowed_revenue/
+│           ├── kafka_windowed_revenue/  # Kafka streaming output
 │           ├── product_totals_snapshots/
 │           └── checkpoint/
 │
@@ -125,22 +139,24 @@ batch_vs_stream/
 │   │   └── transformations.py  # Pure transformation functions
 │   │
 │   └── stream/
-│       ├── stream_job.py        # Main streaming ETL entry point
+│       ├── stream_job.py        # Main file-based streaming ETL
 │       ├── stream_transformations.py  # Streaming transformations
-│       └── event_generator.py   # Simulates real-time data arrival
+│       ├── event_generator.py   # Simulates real-time data arrival
+│       ├── kafka_producer.py    # Kafka producer (sends events)
+│       └── kafka_stream_job.py  # Kafka streaming consumer
 │
 ├── docs/
 │   ├── batch_vs_stream.md       # Theory: Batch vs Stream comparison
-│   └── batch_stream_analysis.md # Analysis: Performance, complexity, when to use each
+│   ├── batch_stream_analysis.md # Analysis: Performance, complexity
+│   └── kafka_comparison.md      # File-based vs Kafka streaming
 │
 ├── requirements.txt
 ├── .gitignore
 └── README.md
 ```
-
 ---
 
-## 🚀 Setup Instructions
+##  Setup Instructions
 
 ### 1. Clone the Repository
 ```bash
@@ -204,7 +220,7 @@ Saved orders to CSV
 
 ---
 
-## 🎮 Usage
+## Usage
 
 ### Run Batch Processing
 ```bash
@@ -386,7 +402,7 @@ Press Ctrl+C to stop
 ...
 +----------+------------+-------------+
 
-  📊 Snapshot written: batch_0000.csv
+   Snapshot written: batch_0000.csv
 
 [Console-WindowedRevenue] Batch #1
   Rows processed: 122
@@ -401,10 +417,85 @@ STREAMING ETL JOB COMPLETED
 Total runtime: 306.93 seconds
 ======================================================================
 ```
+### Option 3: Kafka Streaming (Production-Grade) 
+
+#### Prerequisites: Start Kafka
+
+**Terminal 1: Start Kafka with Docker**
+```bash
+# In project root directory
+docker-compose up -d
+
+# Check containers are running
+docker ps
+
+# Expected output:
+# - kafka-simple (Up)
+# - kafka-ui (Up)
+
+# Verify Kafka is ready
+docker logs kafka-simple --tail 50
+# Should see: "Kafka Server started"
+```
+
+**What's running:**
+- **Kafka broker** on `localhost:9092` (KRaft mode)
+- **Kafka UI** on `http://localhost:8080` (web monitoring interface)
+
+
+#### Run Kafka Streaming Pipeline
+
+**Terminal 1: Start Kafka Consumer (Spark Streaming)**
+```bash
+python src/stream/kafka_stream_job.py
+```
+
+**Expected output:**
+```
+======================================================================
+KAFKA STREAMING ETL JOB STARTED
+======================================================================
+[1/6] Loading configuration...
+[2/6] Creating Spark session with Kafka support...
+...
+KAFKA STREAMING QUERIES RUNNING
+======================================================================
+Waiting for Kafka messages...
+Press Ctrl+C to stop
+```
+
+**Terminal 2: Start Kafka Producer**
+```bash
+python src/stream/kafka_producer.py
+```
+
+**Expected output:**
+```
+======================================================================
+KAFKA PRODUCER STARTED
+======================================================================
+Total rows: 10200
+Batch size: 100
+Topic: ecommerce-orders
+======================================================================
+
+[Batch 0001] Sent: 100 | Failed: 0
+  Sleeping for 2.34 seconds...
+[Batch 0002] Sent: 100 | Failed: 0
+...
+```
+
+**Browser: Monitor in Kafka UI**
+
+Open **http://localhost:8080**
+
+Navigate to:
+- **Topics** → `ecommerce-orders` → **Messages** (see messages in real-time)
+- **Consumers** → `spark-ecommerce-group` → **Consumer Lag**
 
 ---
 
-## 📚 Documentation
+##  Documentation
 
 ### Theory & Analysis
 
@@ -514,6 +605,13 @@ generator:
 - ❌ More complex to implement (watermarks, state management, checkpointing)
 - ❌ Harder to debug - cannot easily inspect intermediate results
 - ❌ Slower overall throughput due to micro-batch overhead (306 seconds for same 10K records)
+
+### Kafka Streaming
+- ✅ **Production-ready** architecture
+- ✅ **Lowest latency** (1-5 seconds)
+- ✅ **Message persistence** and replay capability
+- ✅ **Horizontal scalability**
+- ❌ More complex setup (requires Kafka infrastructure)
 
 ### Streaming Limitations vs Batch
 1. **No easy quarantine** - must filter instead of saving invalid records

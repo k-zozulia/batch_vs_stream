@@ -44,14 +44,18 @@ class StreamingMetricsListener:
     def __init__(self, query_name):
         self.query_name = query_name
         self.batch_count = 0
+        self.total_rows = 0
+        self.min_event_time = None
+        self.max_event_time = None
+        self.start_time = time.time()
 
     def log_batch_metrics(self, batch_df, batch_id):
         """Log metrics for current micro-batch."""
         self.batch_count += 1
-
         row_count = batch_df.count()
+        self.total_rows += row_count
 
-        if "order_timestamp" in batch_df.columns:
+        if "order_timestamp" in batch_df.columns and row_count > 0:
             stats = batch_df.agg(
                 _min("order_timestamp").alias("min_time"),
                 _max("order_timestamp").alias("max_time"),
@@ -59,6 +63,12 @@ class StreamingMetricsListener:
 
             min_time = stats["min_time"]
             max_time = stats["max_time"]
+
+            # Track overall min/max
+            if self.min_event_time is None or min_time < self.min_event_time:
+                self.min_event_time = min_time
+            if self.max_event_time is None or max_time > self.max_event_time:
+                self.max_event_time = max_time
 
             print(
                 f"\n[{self.query_name}] Batch #{batch_id} (Total batches: {self.batch_count})"
@@ -68,6 +78,22 @@ class StreamingMetricsListener:
         else:
             print(f"\n[{self.query_name}] Batch #{batch_id}")
             print(f"  Rows processed: {row_count}")
+
+    def get_summary(self):
+        """Get summary statistics."""
+        elapsed = time.time() - self.start_time
+        return {
+            "query_name": self.query_name,
+            "total_batches": self.batch_count,
+            "total_rows": self.total_rows,
+            "elapsed_seconds": elapsed,
+            "avg_rows_per_batch": (
+                self.total_rows / self.batch_count if self.batch_count > 0 else 0
+            ),
+            "throughput_rows_per_sec": self.total_rows / elapsed if elapsed > 0 else 0,
+            "min_event_time": self.min_event_time,
+            "max_event_time": self.max_event_time,
+        }
 
 
 def main():
@@ -258,7 +284,29 @@ def main():
         print("STREAMING JOB STATISTICS")
         print("=" * 70)
 
+        # Collect summaries from all listeners
+
+        listeners = [console_listener, file_listener, totals_listener]
+
+        for listener in listeners:
+            summary = listener.get_summary()
+            print(f" {summary['query_name']}")
+            print(f" Total batches:{summary['total_batches']}")
+            print(f" Total rows: {summary['total_rows']}")
+            print(f" Avg rows/batch: {summary['avg_rows_per_batch']:.1f}")
+            print(f" Throughput: {summary['throughput_rows_per_sec']:.2f} rows/sec")
+
+            if summary["min_event_time"]:
+                print(
+                    f"  Event time span:{summary['min_event_time']} to {summary['max_event_time']}"
+                )
+
         # Stop all active queries
+
+        print("\n" + "=" * 70)
+        print("STOPPING QUERIES")
+        print("=" * 70)
+
         for query in spark.streams.active:
             print(f"Stopping query: {query.name or query.id}")
             query.stop()
@@ -266,10 +314,21 @@ def main():
         end_time = time.time()
         duration = end_time - start_time
 
+        total_processed = console_listener.total_rows
+        avg_throughput = total_processed / duration if duration > 0 else 0
+
+        print("\n" + "=" * 70)
+        print("OVERALL SUMMARY")
+        print("=" * 70)
+        print(f"Total streaming queries:  4 (console, file, memory, CSV)")
+        print(f"Input records processed:  {total_processed:,}")
+        print(f"Valid records output:     ~{total_processed:,}")
+        print(
+            f"Total runtime:            {duration:.2f} seconds ({duration / 60:.1f} minutes)"
+        )
+        print(f"Average throughput:       {avg_throughput:.2f} rows/second")
         print("\n" + "=" * 70)
         print("STREAMING ETL JOB COMPLETED")
-        print("=" * 70)
-        print(f"Total runtime: {duration:.2f} seconds")
         print("=" * 70)
 
         spark.stop()

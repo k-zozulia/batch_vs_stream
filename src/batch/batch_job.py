@@ -95,7 +95,7 @@ def main():
     before_dedup = valid_df.count()
     valid_df = remove_duplicates(valid_df)
     after_dedup = valid_df.count()
-    duplicates_removed = after_dedup - before_dedup
+    duplicates_removed = before_dedup - after_dedup
     print(f"Duplicates removed: {duplicates_removed}")
 
     print("Separating cancelled orders...")
