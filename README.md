@@ -3,7 +3,7 @@
 A comprehensive PySpark project demonstrating the differences between batch and streaming data processing using an e-commerce orders dataset.
 ---
 
-## 🎯 Project Overview
+##  Project Overview
 
 This project implements **two separate data processing pipelines** using PySpark:
 
@@ -20,7 +20,7 @@ Both pipelines apply the same business logic (cleaning, validation, enrichment, 
 
 ---
 
-## ✨ Features
+##  Features
 
 ### Batch Processing
 - ✅ Read all historical data at once from CSV files
@@ -62,7 +62,7 @@ Both pipelines apply the same business logic (cleaning, validation, enrichment, 
 
 ---
 
-## 💻 Requirements
+##  Requirements
 
 ### Software
 - **Python**: 3.11
@@ -95,8 +95,6 @@ set PATH=%PATH%;C:\hadoop\bin
 ```bash
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home
 ```
-
-> **Note**: Download Hadoop utilities from [spark-winutils](https://github.com/robguilarr/spark-winutils-3.3.1/tree/master/hadoop-3.3.1/bin) and place in `C:\hadoop\bin`
 
 ---
 
@@ -550,8 +548,6 @@ generator:
 <img width="654" height="514" alt="image" src="https://github.com/user-attachments/assets/46c35c97-c6a3-468e-8966-3be4723999f3" />
 <img width="670" height="244" alt="image" src="https://github.com/user-attachments/assets/2eac73d9-5073-46e6-b4a1-be52fff202c3" />
 
-
-
 ---
 
 ### Event Generator
@@ -567,14 +563,23 @@ generator:
 <img width="639" height="423" alt="image" src="https://github.com/user-attachments/assets/1c3544bb-60ea-4695-9c96-27d555306711" />
 <img width="597" height="275" alt="image" src="https://github.com/user-attachments/assets/d2ac2f4a-8ab9-4ffe-ba92-d950aa7c1d0c" />
 
-
-
 ---
 
 ### Output Data Structure
 <img width="332" height="455" alt="image" src="https://github.com/user-attachments/assets/786d52f5-1765-4c46-98cb-f5b5bc510960" />
 
 *Warehouse structure showing batch and stream outputs*
+
+---
+### Kafka integration
+<img width="806" height="436" alt="image" src="https://github.com/user-attachments/assets/a2e5e587-4a6f-4283-b7cb-f22018229a3b" />
+<img width="618" height="151" alt="image" src="https://github.com/user-attachments/assets/b04f58ec-41c2-4a76-8712-edfce5e5da68" />
+<img width="640" height="353" alt="image" src="https://github.com/user-attachments/assets/844feb2a-92de-4615-a19f-667cd515ff12" />
+<img width="957" height="128" alt="image" src="https://github.com/user-attachments/assets/99e98592-8288-4dd7-a22e-296790c0946f" />
+
+
+
+
 
 
 ---
